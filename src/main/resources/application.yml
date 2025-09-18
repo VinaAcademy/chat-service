@@ -3,17 +3,6 @@ server:
 spring:
   application:
     name: chat-service
-  grpc:
-    server:
-      enabled: false
-    client:
-      channels:
-        platform-server:
-          address: ${PLATFORM_GRPC_URL:localhost:9090}
-          enable-keep-alive: true
-          keep-alive-time: 30s
-          keep-alive-timeout: 5s
-          max-inbound-message-size: 20MB
   datasource:
     driver-class-name: org.postgresql.Driver
     username: ${DB_USERNAME:postgres}
@@ -35,21 +24,6 @@ spring:
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-  security:
-    oauth2:
-      client:
-        registration:
-          grpc-client:
-            provider: as-vina
-            client-id: ${GRPC_CLIENT_ID:grpc-client}
-            client-secret: ${GRPC_CLIENT_SECRET:grpc-secret}
-            authorization-grant-type: client_credentials
-            scope:
-              - "api.read"
-              - "api.write"
-        provider:
-          as-vina:
-            token-uri: ${AS_VINA_TOKEN_URI:http://localhost:8080/oauth2/token}
 springdoc:
   swagger-ui:
     path: /
@@ -59,6 +33,7 @@ logging:
     root: INFO
     vn:
       vinaacademy:
+        security: TRACE
         chat: TRACE
     org:
       hibernate:
@@ -68,3 +43,26 @@ logging:
               BasicBinder: TRACE
           nodeValue: TRACE
         SQL: DEBUG
+
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+  server:
+    port: '8081'
+
+
+security:
+  oauth2:
+    provider:
+      token-uri: ${SECURITY_OAUTH2_TOKEN_URI:http://localhost:8080/oauth2/token}
+    grpc-client:
+      scopes: ${SECURITY_OAUTH2_SCOPE_1:api.read}, ${SECURITY_OAUTH2_SCOPE_2:api.write}
+      client-id: ${SECURITY_OAUTH2_GRPC_CLIENT_ID:grpc-client}
+      client-secret: ${SECURITY_OAUTH2_GRPC_CLIENT_SECRET:grpc-secret}
+  grpc:
+    grpc-address: ${SECURITY_JWT_GRPC_ADDRESS:localhost:9090}
+    enable-keep-alive: ${SECURITY_JWT_ENABLE_KEEP_ALIVE:true}
+    keep-alive-time: ${SECURITY_JWT_KEEP_ALIVE_TIME:30}
+    keep-alive-timeout: ${SECURITY_JWT_KEEP_ALIVE_TIMEOUT:5}
