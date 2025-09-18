@@ -15,6 +15,14 @@ public class ChatServiceApplication {
     SpringApplication.run(ChatServiceApplication.class, args);
   }
 
+  /**
+   * Creates a CommandLineRunner bean that executes at application startup.
+   *
+   * <p>The runner invokes JwtGrpcClient.validateToken with a hard-coded token ("test-token")
+   * once the Spring context is initialized.</p>
+   *
+   * @return a CommandLineRunner that calls the JWT gRPC client's token validation on startup
+   */
   @Bean
   public CommandLineRunner runner(JwtGrpcClient client) {
     return args -> client.validateToken("test-token");
