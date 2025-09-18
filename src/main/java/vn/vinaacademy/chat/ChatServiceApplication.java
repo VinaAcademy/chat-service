@@ -5,7 +5,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import vn.vinaacademy.chat.grpc.JwtGrpcClient;
+import vn.vinaacademy.security.grpc.JwtGrpcClient;
 
 @Slf4j
 @SpringBootApplication
@@ -17,9 +17,6 @@ public class ChatServiceApplication {
 
   @Bean
   public CommandLineRunner runner(JwtGrpcClient client) {
-    return args -> {
-      var response = client.validateToken("invalid-token");
-      log.debug("Token valid: {}", response.getIsValid());
-    };
+    return args -> client.validateToken("test-token");
   }
 }
