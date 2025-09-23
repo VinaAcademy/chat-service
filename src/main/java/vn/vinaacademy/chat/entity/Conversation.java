@@ -1,18 +1,17 @@
 package vn.vinaacademy.chat.entity;
 
 import jakarta.persistence.*;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import vn.vinaacademy.chat.entity.enums.ConversationType;
 
 @Entity
 @Table(
     name = "conversation",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uq_pair", columnNames = {"user_min_id", "user_max_id"})
-    }
-)
+    indexes = {@Index(name = "idx_conv_last", columnList = "last_msg_at DESC, id DESC")})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,42 +19,43 @@ import org.hibernate.annotations.CreationTimestamp;
 @Builder
 public class Conversation {
 
-    @Id
-    @GeneratedValue
-    private UUID id;
+  @Id @UuidGenerator private UUID id;
 
-    @Column(name = "user_a_id", nullable = false)
-    private UUID userAId;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private ConversationType type; // DIRECT | GROUP
 
-    @Column(name = "user_b_id", nullable = false)
-    private UUID userBId;
+  @Column(columnDefinition = "text")
+  private String title; // null với DIRECT
 
-    // user_min_id, user_max_id là generated column -> Hibernate chỉ đọc
-    @Column(name = "user_min_id", insertable = false, updatable = false)
-    private UUID userMinId;
+  @Column(name = "avatar_file_id")
+  private UUID avatarFileId;
 
-    @Column(name = "user_max_id", insertable = false, updatable = false)
-    private UUID userMaxId;
+  @Column(name = "created_by", nullable = false)
+  private UUID createdBy;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+  @CreationTimestamp
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private Instant createdAt;
 
-    @Column(name = "last_read_msg_id_a")
-    private UUID lastReadMsgIdA;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "last_msg_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+  private Message lastMessage; // optional
 
-    @Column(name = "last_read_at_a")
-    private OffsetDateTime lastReadAtA;
+  @Column(name = "last_msg_at")
+  private Instant lastMessageAt;
 
-    @Column(name = "last_read_msg_id_b")
-    private UUID lastReadMsgIdB;
-
-    @Column(name = "last_read_at_b")
-    private OffsetDateTime lastReadAtB;
-
-    @Column(name = "last_msg_id")
-    private UUID lastMsgId;
-
-    @Column(name = "last_msg_at")
-    private OffsetDateTime lastMsgAt;
+  public void setLastMessage(Message lastMessage) {
+    this.lastMessage = lastMessage;
+    if (lastMessage != null) {
+      var msgConv = lastMessage.getConversation();
+      if (msgConv != null && this.id != null && !this.id.equals(msgConv.getId())) {
+        throw new IllegalArgumentException(
+            "Message's conversation does not match this conversation");
+      }
+      this.lastMessageAt = lastMessage.getCreatedAt();
+    } else {
+      this.lastMessageAt = null;
+    }
+  }
 }

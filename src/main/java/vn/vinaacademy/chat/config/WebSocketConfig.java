@@ -7,6 +7,7 @@ import java.util.Map;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
@@ -25,9 +26,14 @@ import vn.vinaacademy.chat.interceptor.JwtHandshakeInterceptor;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
 
+  @Value("${app.ws.allowed-origins:http://localhost:*}")
+  private String[] allowedOrigins;
+
   @Override
   public void configureMessageBroker(MessageBrokerRegistry registry) {
     registry.setApplicationDestinationPrefixes("/app");
+    // Enable simple broker for local WebSocket communication
+    // Kafka handles the message distribution between service instances
     registry.enableSimpleBroker("/topic", "/queue");
     registry.setUserDestinationPrefix("/user");
   }
@@ -38,7 +44,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         .addEndpoint("/ws")
         .addInterceptors(jwtHandshakeInterceptor)
         .setHandshakeHandler(jwtPrincipalHandshakeHandler())
-        .setAllowedOriginPatterns("*")
+        .setAllowedOriginPatterns(allowedOrigins)
         .withSockJS();
   }
 
