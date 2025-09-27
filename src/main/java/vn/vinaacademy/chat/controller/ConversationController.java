@@ -3,6 +3,7 @@ package vn.vinaacademy.chat.controller;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.vinaacademy.chat.dto.ConversationDto;
 import vn.vinaacademy.chat.dto.request.CreateGroupRequest;
@@ -40,5 +41,13 @@ public class ConversationController {
   @PreAuthorize("isAuthenticated()")
   public ConversationDto createGroupConversation(@RequestBody CreateGroupRequest request) {
     return conversationService.createGroupConversation(request.getTitle(), request.getMemberIds());
+  }
+
+  @PutMapping("/{conversationId}/mark-read")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<Void> markConversationAsRead(
+      @PathVariable("conversationId") String conversationId) {
+    conversationService.markConversationAsRead(UUID.fromString(conversationId));
+    return ResponseEntity.ok().build();
   }
 }

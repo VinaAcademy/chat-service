@@ -12,4 +12,6 @@ public interface ConversationService {
   List<ConversationDto> getAllConversationsByCurrentUser();
   
   ConversationDto createGroupConversation(String title, List<UUID> memberIds);
+  
+  void markConversationAsRead(UUID conversationId);
 }
