@@ -25,6 +25,7 @@ spring:
       ddl-auto: validate
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
+
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -37,6 +38,14 @@ spring:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP_ID:chat-service-group}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: vn.vinaacademy.chat.dto
+        spring.json.value.default.type: vn.vinaacademy.chat.dto.MessageDto
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 springdoc:
   swagger-ui:
     path: /
@@ -45,9 +54,9 @@ logging:
   level:
     root: INFO
     vn:
-      vinaacademy:
-        security: TRACE
-        chat: TRACE
+      vinaacademy: TRACE
+      vinaacademy.security: TRACE
+      vinaacademy.chat: TRACE
     org:
       hibernate:
         type:
