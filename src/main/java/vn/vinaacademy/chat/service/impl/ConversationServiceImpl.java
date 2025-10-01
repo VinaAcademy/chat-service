@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.vinaacademy.chat.domain.ConversationDomainService;
@@ -21,7 +20,9 @@ import vn.vinaacademy.chat.repository.ConversationMemberRepository;
 import vn.vinaacademy.chat.repository.ConversationRepository;
 import vn.vinaacademy.chat.repository.MessageRepository;
 import vn.vinaacademy.chat.service.ConversationService;
+import vn.vinaacademy.common.exception.BadRequestException;
 import vn.vinaacademy.security.authentication.SecurityContextHolder;
+import vn.vinaacademy.security.exception.AccessDeniedException;
 import vn.vinaacademy.security.grpc.UserGrpcClient;
 
 @Service
@@ -57,7 +58,7 @@ public class ConversationServiceImpl implements ConversationService {
             .toList();
     GetUserByIdsResponse usersResponse = userGrpcClient.getUserByIds(memberIds);
     if (!usersResponse.getSuccess()) {
-      throw new RuntimeException("Failed to fetch user details");
+      throw BadRequestException.message("Failed to fetch user details");
     }
     return ConversationMapper.INSTANCE.toDto(conversation, usersResponse.getUsersList());
   }
@@ -79,7 +80,7 @@ public class ConversationServiceImpl implements ConversationService {
     // Fetch user details in batch
     GetUserByIdsResponse usersResponse = userGrpcClient.getUserByIds(new ArrayList<>(allMemberIds));
     if (!usersResponse.getSuccess()) {
-      throw new RuntimeException("Failed to fetch user details");
+      throw BadRequestException.message("Failed to fetch user details");
     }
 
     // Convert to DTOs
@@ -100,7 +101,7 @@ public class ConversationServiceImpl implements ConversationService {
     List<String> memberIdStrings = memberIds.stream().map(UUID::toString).toList();
     GetUserByIdsResponse usersResponse = userGrpcClient.getUserByIds(memberIdStrings);
     if (!usersResponse.getSuccess()) {
-      throw new RuntimeException("Failed to fetch user details");
+      throw BadRequestException.message("Failed to fetch user details");
     }
 
     return ConversationMapper.INSTANCE.toDto(conversation, usersResponse.getUsersList());
@@ -131,7 +132,7 @@ public class ConversationServiceImpl implements ConversationService {
     Conversation conversation =
         conversationRepository
             .findById(conversationId)
-            .orElseThrow(() -> new RuntimeException("Conversation not found"));
+            .orElseThrow(() -> BadRequestException.message("Conversation not found"));
 
     boolean isParticipant =
         conversationDomainService.isUserInConversation(currentUserId, conversation);
