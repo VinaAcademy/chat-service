@@ -2,6 +2,7 @@ package vn.vinaacademy.chat.entity;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -54,7 +55,7 @@ public class ConversationMember {
   private Instant muteUntil;
 
   @Column(name = "last_read_msg_id")
-  private java.util.UUID lastReadMsgId;
+  private UUID lastReadMsgId;
 
   @Column(name = "last_read_at")
   private Instant lastReadAt;

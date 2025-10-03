@@ -26,7 +26,7 @@ import vn.vinaacademy.chat.interceptor.JwtHandshakeInterceptor;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
 
-  @Value("${app.ws.allowed-origins:http://localhost:*}")
+  @Value("${app.ws.allowed-origins:*}")
   private String[] allowedOrigins;
 
   @Override
