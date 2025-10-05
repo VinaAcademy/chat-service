@@ -7,6 +7,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import vn.vinaacademy.chat.domain.ConversationDomainService;
 import vn.vinaacademy.chat.dto.MessageDto;
@@ -21,7 +22,6 @@ import vn.vinaacademy.chat.service.KafkaMessageService;
 import vn.vinaacademy.chat.service.MessageService;
 import vn.vinaacademy.security.authentication.SecurityContextHolder;
 import vn.vinaacademy.security.authentication.UserContext;
-import org.springframework.security.access.AccessDeniedException;
 
 @Slf4j
 @Service
@@ -58,7 +58,8 @@ public class MessageServiceImpl implements MessageService {
     boolean isParticipant =
         conversationDomainService.isUserInConversation(currentUserId, conversation);
     if (!isParticipant) {
-      throw new AccessDeniedException("Access denied: User is not a participant in the conversation");
+      throw new AccessDeniedException(
+          "Access denied: User is not a participant in the conversation");
     }
 
     Pageable pageable = Pageable.ofSize(size).withPage(page);
@@ -72,7 +73,7 @@ public class MessageServiceImpl implements MessageService {
   public void sendPrivateMessage(PrivateMessage messageDto, UUID senderId) {
     Conversation conversation =
         conversationDomainService.getOrCreateDirectConversation(
-            senderId, UUID.fromString(messageDto.getRecipientId()));
+            senderId, messageDto.getRecipientId());
 
     Message message = MessageMapper.INSTANCE.fromPrivateMessage(messageDto, conversation, senderId);
 
@@ -86,13 +87,13 @@ public class MessageServiceImpl implements MessageService {
     if (!Objects.equals(senderIdStr, messageDto.getRecipientId())) {
       kafkaMessageService.sendPrivateMessage(senderIdStr, result);
     }
-    kafkaMessageService.sendPrivateMessage(messageDto.getRecipientId(), result);
+    kafkaMessageService.sendPrivateMessage(String.valueOf(messageDto.getRecipientId()), result);
   }
 
   @Override
   @Transactional
   public void sendGroupMessage(GroupMessage messageDto, UUID senderId) {
-    UUID conversationId = UUID.fromString(messageDto.getConversationId());
+    UUID conversationId = messageDto.getConversationId();
 
     // Validate that conversation exists and sender is a member
     Conversation conversation =
@@ -102,7 +103,8 @@ public class MessageServiceImpl implements MessageService {
 
     boolean isParticipant = conversationDomainService.isUserInConversation(senderId, conversation);
     if (!isParticipant) {
-      throw new AccessDeniedException("Access denied: User is not a participant in the conversation");
+      throw new AccessDeniedException(
+          "Access denied: User is not a participant in the conversation");
     }
 
     // Create message
@@ -116,6 +118,6 @@ public class MessageServiceImpl implements MessageService {
     MessageDto result = MessageMapper.INSTANCE.toDto(savedMessage);
 
     // Send to all group members via Kafka
-    kafkaMessageService.sendGroupMessage(messageDto.getConversationId(), result);
+    kafkaMessageService.sendGroupMessage(String.valueOf(messageDto.getConversationId()), result);
   }
 }

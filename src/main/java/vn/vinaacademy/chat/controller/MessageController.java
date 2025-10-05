@@ -20,18 +20,18 @@ public class MessageController {
   @GetMapping("/recipient/{recipientId}")
   @PreAuthorize("isAuthenticated()")
   public List<MessageDto> getMessageByRecipientId(
-      @PathVariable("recipientId") String recipientId,
+      @PathVariable("recipientId") UUID recipientId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size) {
-    return messageService.getMessagesByRecipientId(UUID.fromString(recipientId), page, size);
+    return messageService.getMessagesByRecipientId(recipientId, page, size);
   }
 
   @GetMapping("/conversation/{conversationId}")
   @PreAuthorize("isAuthenticated()")
   public List<MessageDto> getMessagesByConversationId(
-      @PathVariable("conversationId") String conversationId,
+      @PathVariable("conversationId") UUID conversationId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size) {
-    return messageService.getMessagesByConversationId(UUID.fromString(conversationId), page, size);
+    return messageService.getMessagesByConversationId(conversationId, page, size);
   }
 }

@@ -70,6 +70,13 @@ public class KafkaMessageService {
     try {
       log.info("Received group message from Kafka: {}", record);
 
+      log.debug(
+          "Received group message from Kafka: topic={}, partition={}, offset={}, key={}",
+          record.topic(),
+          record.partition(),
+          record.offset(),
+          record.key());
+
       MessageDto payload = record.value();
 
       // Broadcast to topic (all subscribers to the conversation will receive)

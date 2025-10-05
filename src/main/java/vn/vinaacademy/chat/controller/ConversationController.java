@@ -25,16 +25,15 @@ public class ConversationController {
 
   @GetMapping("/{conversationId}")
   @PreAuthorize("isAuthenticated()")
-  public ConversationDto getConversationById(
-      @PathVariable("conversationId") String conversationId) {
-    return conversationService.getConversationById(UUID.fromString(conversationId));
+  public ConversationDto getConversationById(@PathVariable("conversationId") UUID conversationId) {
+    return conversationService.getConversationById(conversationId);
   }
 
   @GetMapping("/direct/{userId2}")
   @PreAuthorize("isAuthenticated()")
-  public ConversationDto getDirectConversation(@PathVariable("userId2") String userId2) {
+  public ConversationDto getDirectConversation(@PathVariable("userId2") UUID userId2) {
     UUID currentUserId = UUID.fromString(SecurityContextHolder.getCurrentUserId());
-    return conversationService.getDirectConversation(currentUserId, UUID.fromString(userId2));
+    return conversationService.getDirectConversation(currentUserId, userId2);
   }
 
   @PostMapping("/groups")
@@ -46,8 +45,8 @@ public class ConversationController {
   @PutMapping("/{conversationId}/mark-read")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<Void> markConversationAsRead(
-      @PathVariable("conversationId") String conversationId) {
-    conversationService.markConversationAsRead(UUID.fromString(conversationId));
+      @PathVariable("conversationId") UUID conversationId) {
+    conversationService.markConversationAsRead(conversationId);
     return ResponseEntity.ok().build();
   }
 }

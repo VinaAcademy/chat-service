@@ -1,9 +1,9 @@
-name: Chat Service - PR CD Pipeline
+name: PR CD Pipeline
 
 on:
   pull_request:
     branches: [ main, master ]
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
 
 jobs:
   test-and-build:
@@ -13,7 +13,7 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: chat_service_test
+          POSTGRES_DB: service_test
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
         options: >-
@@ -35,15 +35,18 @@ jobs:
           distribution: 'temurin'
 
       - name: Cache Maven dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Grant execute permission to mvnw
+        run: chmod +x mvnw
+
       - name: Run tests
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/chat_service_test
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/service_test
           SPRING_DATASOURCE_USERNAME: test
           SPRING_DATASOURCE_PASSWORD: test
           SPRING_PROFILES_ACTIVE: test

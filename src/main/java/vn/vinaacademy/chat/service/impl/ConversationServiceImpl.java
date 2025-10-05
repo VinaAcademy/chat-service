@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.vinaacademy.chat.domain.ConversationDomainService;
@@ -45,9 +46,14 @@ public class ConversationServiceImpl implements ConversationService {
   @Override
   @Transactional
   public ConversationDto getDirectConversation(UUID userId1, UUID userId2) {
+    UUID currentUserId = UUID.fromString(SecurityContextHolder.getCurrentUserId());
+    if (!currentUserId.equals(userId1) && !currentUserId.equals(userId2)) {
+      throw new AccessDeniedException(
+          "Access denied: User is not a participant in the conversation");
+    }
+    UUID peerId = currentUserId.equals(userId1) ? userId2 : userId1;
     Conversation conversation =
-        conversationDomainService.getOrCreateDirectConversation(userId1, userId2);
-
+        conversationDomainService.getOrCreateDirectConversation(currentUserId, peerId);
     return getConversationDto(conversation);
   }
 
@@ -118,7 +124,11 @@ public class ConversationServiceImpl implements ConversationService {
     // Get the last message in the conversation
     Optional<Message> lastMessageToUse = Optional.ofNullable(conversation.getLastMessage());
     if (lastMessageToUse.isEmpty()) {
-      lastMessageToUse = messageRepository.findLastMessageByConversationId(conversationId);
+      lastMessageToUse =
+          messageRepository
+              .findLastMessageByConversationId(conversationId, PageRequest.of(0, 1))
+              .stream()
+              .findFirst();
     }
 
     // Update the user's last read message

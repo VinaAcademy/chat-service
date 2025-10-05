@@ -3,8 +3,10 @@ package vn.vinaacademy.chat.domain.impl;
 import com.vinaacademy.grpc.GetUserByIdResponse;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -84,9 +86,25 @@ public class ConversationDomainServiceImpl implements ConversationDomainService 
   @Override
   @Transactional
   public Conversation getOrCreateDirectConversation(UUID currentUserId, UUID recipientId) {
-    return conversationRepository
-        .findOneByUserIds(currentUserId, recipientId)
-        .orElseGet(() -> createDirectConversation(currentUserId, recipientId));
+    List<Conversation> conversations =
+        conversationRepository.findOneByUserIds(currentUserId, recipientId);
+
+    if (Objects.equals(currentUserId, recipientId)) {
+      conversations = conversations.stream().filter(c -> c.getMembers().size() == 1).toList();
+    }
+
+    if (conversations.isEmpty()) {
+      return createDirectConversation(currentUserId, recipientId);
+    }
+
+    if (conversations.size() > 1) {
+      log.warn(
+          "Multiple direct conversations found between users {} and {}. Returning the first one.",
+          currentUserId,
+          recipientId);
+    }
+
+    return conversations.get(0);
   }
 
   @Override
@@ -113,8 +131,9 @@ public class ConversationDomainServiceImpl implements ConversationDomainService 
     conversation = conversationRepository.save(conversation);
 
     // Create members
+    Set<UUID> uniqueMemberIds = new LinkedHashSet<>(memberIds);
     List<ConversationMember> members = new ArrayList<>();
-    for (UUID memberId : memberIds) {
+    for (UUID memberId : uniqueMemberIds) {
       MemberRole role = memberId.equals(creatorId) ? MemberRole.OWNER : MemberRole.MEMBER;
       ConversationMember member =
           ConversationMember.builder()

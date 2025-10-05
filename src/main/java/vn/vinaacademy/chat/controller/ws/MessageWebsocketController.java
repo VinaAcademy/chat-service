@@ -1,5 +1,7 @@
 package vn.vinaacademy.chat.controller.ws;
 
+import static vn.vinaacademy.chat.utils.AppUtils.getSenderId;
+
 import java.security.Principal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +25,9 @@ public class MessageWebsocketController {
     if (principal == null || principal.getName() == null) {
       throw new AccessDeniedException("Unauthenticated WebSocket message");
     }
-    String senderId = principal.getName();
+    UUID senderId = getSenderId(principal);
     log.info("Received private message from user: {} to user: {}", senderId, msg.getRecipientId());
-    messageService.sendPrivateMessage(msg, UUID.fromString(senderId));
+    messageService.sendPrivateMessage(msg, senderId);
   }
 
   @MessageMapping("/group")
@@ -33,11 +35,11 @@ public class MessageWebsocketController {
     if (principal == null || principal.getName() == null) {
       throw new AccessDeniedException("Unauthenticated WebSocket message");
     }
-    String senderId = principal.getName();
+    UUID senderId = getSenderId(principal);
     log.info(
         "Received group message from user: {} to conversation: {}",
         senderId,
         msg.getConversationId());
-    messageService.sendGroupMessage(msg, UUID.fromString(senderId));
+    messageService.sendGroupMessage(msg, senderId);
   }
 }

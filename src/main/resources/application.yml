@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:8080}
 eureka:
   client:
     serviceUrl:
@@ -80,13 +80,13 @@ management:
     web:
       base-path: /actuator
   server:
-    port: '8081'
+    port: ${SERVER_PORT:8080}
 
 
 security:
   oauth2:
     provider:
-      token-uri: ${SECURITY_OAUTH2_TOKEN_URI:http://localhost:8080/oauth2/token}
+      token-uri: ${SECURITY_OAUTH2_TOKEN_URI:http://localhost:8081/oauth2/token}
     grpc-client:
       scopes: ${SECURITY_OAUTH2_SCOPE_1:api.read}, ${SECURITY_OAUTH2_SCOPE_2:api.write}
       client-id: ${SECURITY_OAUTH2_GRPC_CLIENT_ID:grpc-client}

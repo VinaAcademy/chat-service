@@ -34,11 +34,14 @@ jobs:
           distribution: 'temurin'
 
       - name: Cache Maven dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+
+      - name: Grant execute permission to mvnw
+        run: chmod +x mvnw
 
       - name: Run tests
         env:
@@ -62,11 +65,14 @@ jobs:
           distribution: 'temurin'
 
       - name: Cache Maven dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+
+      - name: Grant execute permission to mvnw
+        run: chmod +x mvnw
 
       - name: Build application
         run: ./mvnw clean package -DskipTests
