@@ -1,4 +1,4 @@
-package vn.vinaacademy.chat.service;
+package vn.vinaacademy.chat.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

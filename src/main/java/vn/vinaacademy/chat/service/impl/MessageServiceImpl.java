@@ -1,5 +1,7 @@
 package vn.vinaacademy.chat.service.impl;
 
+import com.vinaacademy.grpc.GetUserByIdResponse;
+import com.vinaacademy.grpc.UserInfo;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Objects;
@@ -15,13 +17,17 @@ import vn.vinaacademy.chat.dto.request.GroupMessage;
 import vn.vinaacademy.chat.dto.request.PrivateMessage;
 import vn.vinaacademy.chat.entity.Conversation;
 import vn.vinaacademy.chat.entity.Message;
+import vn.vinaacademy.chat.event.KafkaMessageService;
+import vn.vinaacademy.chat.event.KafkaNotificationService;
 import vn.vinaacademy.chat.mapper.MessageMapper;
 import vn.vinaacademy.chat.repository.ConversationRepository;
 import vn.vinaacademy.chat.repository.MessageRepository;
-import vn.vinaacademy.chat.service.KafkaMessageService;
 import vn.vinaacademy.chat.service.MessageService;
+import vn.vinaacademy.kafka.event.NotificationCreateEvent;
+import vn.vinaacademy.kafka.event.NotificationCreateEvent.NotificationType;
 import vn.vinaacademy.security.authentication.SecurityContextHolder;
 import vn.vinaacademy.security.authentication.UserContext;
+import vn.vinaacademy.security.grpc.UserGrpcClient;
 
 @Slf4j
 @Service
@@ -30,7 +36,9 @@ public class MessageServiceImpl implements MessageService {
   private final MessageRepository messageRepository;
   private final ConversationRepository conversationRepository;
   private final KafkaMessageService kafkaMessageService;
+  private final KafkaNotificationService kafkaNotificationService;
   private final ConversationDomainService conversationDomainService;
+  private final UserGrpcClient userGrpcClient;
 
   @Override
   public List<MessageDto> getMessagesByRecipientId(UUID recipientId, int page, int size) {
@@ -71,6 +79,12 @@ public class MessageServiceImpl implements MessageService {
   @Override
   @Transactional
   public void sendPrivateMessage(PrivateMessage messageDto, UUID senderId) {
+    GetUserByIdResponse response = userGrpcClient.getUserById(senderId);
+    if (!response.getSuccess()) {
+      throw new AccessDeniedException("Access denied: User not found");
+    }
+    UserInfo userInfo = response.getUser();
+
     Conversation conversation =
         conversationDomainService.getOrCreateDirectConversation(
             senderId, messageDto.getRecipientId());
@@ -84,10 +98,19 @@ public class MessageServiceImpl implements MessageService {
 
     MessageDto result = MessageMapper.INSTANCE.toDto(savedMessage);
     String senderIdStr = String.valueOf(message.getSenderId());
-    if (!Objects.equals(senderIdStr, messageDto.getRecipientId())) {
-      kafkaMessageService.sendPrivateMessage(senderIdStr, result);
+    if (!Objects.equals(message.getSenderId(), messageDto.getRecipientId())) {
+      kafkaMessageService.sendPrivateMessage(String.valueOf(messageDto.getRecipientId()), result);
+
+      kafkaNotificationService.sendNotification(
+          NotificationCreateEvent.builder()
+              .title("New Message")
+              .content("You have a new message from " + userInfo.getFullName())
+              .type(NotificationType.SYSTEM)
+              .targetUrl("/conversations/" + conversation.getId())
+              .userId(messageDto.getRecipientId())
+              .build());
     }
-    kafkaMessageService.sendPrivateMessage(String.valueOf(messageDto.getRecipientId()), result);
+    kafkaMessageService.sendPrivateMessage(senderIdStr, result);
   }
 
   @Override

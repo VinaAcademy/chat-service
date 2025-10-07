@@ -82,11 +82,17 @@ management:
   server:
     port: ${SERVER_PORT:8080}
 
+app:
+  ws:
+    allowed-origins: ${WS_ALLOWED_ORIGINS:*}
 
 security:
+  eureka:
+    enabled: ${SECURITY_EUREKA_ENABLED:true}
   oauth2:
     provider:
-      token-uri: ${SECURITY_OAUTH2_TOKEN_URI:http://localhost:8081/oauth2/token}
+      token-uri: ${SECURITY_OAUTH2_TOKEN_URI:http://localhost:8080/oauth2/token}
+      service-name: ${SECURITY_EUREKA_SERVICE_NAME:vinaacademy-platform}
     grpc-client:
       scopes: ${SECURITY_OAUTH2_SCOPE_1:api.read}, ${SECURITY_OAUTH2_SCOPE_2:api.write}
       client-id: ${SECURITY_OAUTH2_GRPC_CLIENT_ID:grpc-client}
@@ -96,3 +102,5 @@ security:
     enable-keep-alive: ${SECURITY_JWT_ENABLE_KEEP_ALIVE:true}
     keep-alive-time: ${SECURITY_JWT_KEEP_ALIVE_TIME:30}
     keep-alive-timeout: ${SECURITY_JWT_KEEP_ALIVE_TIMEOUT:5}
+    service-name: vinaacademy-platform
+    grpc-port: 9090
