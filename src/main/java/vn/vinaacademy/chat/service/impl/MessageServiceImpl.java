@@ -103,8 +103,8 @@ public class MessageServiceImpl implements MessageService {
 
       kafkaNotificationService.sendNotification(
           NotificationCreateEvent.builder()
-              .title("New Message")
-              .content("You have a new message from " + userInfo.getFullName())
+              .title("Bạn có tin nhắn mới")
+              .content("%s: %s".formatted(userInfo.getFullName(), message.getTextContent()))
               .type(NotificationType.SYSTEM)
               .targetUrl("/conversations/" + conversation.getId())
               .userId(messageDto.getRecipientId())
