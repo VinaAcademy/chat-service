@@ -3,12 +3,14 @@ package vn.vinaacademy.chat.service.impl;
 import com.vinaacademy.grpc.GetUserByIdResponse;
 import com.vinaacademy.grpc.UserInfo;
 import jakarta.transaction.Transactional;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.MessagingException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import vn.vinaacademy.chat.domain.ConversationDomainService;
@@ -81,7 +83,7 @@ public class MessageServiceImpl implements MessageService {
   public void sendPrivateMessage(PrivateMessage messageDto, UUID senderId) {
     GetUserByIdResponse response = userGrpcClient.getUserById(senderId);
     if (!response.getSuccess()) {
-      throw new AccessDeniedException("Access denied: User not found");
+      throw new MessagingException("AUTH_ERROR: Access denied: User not found");
     }
     UserInfo userInfo = response.getUser();
 
@@ -94,6 +96,7 @@ public class MessageServiceImpl implements MessageService {
     Message savedMessage = messageRepository.save(message);
 
     conversation.setLastMessage(savedMessage);
+    conversation.setLastMessageAt(Instant.now());
     conversationRepository.save(conversation);
 
     MessageDto result = MessageMapper.INSTANCE.toDto(savedMessage);
@@ -105,7 +108,7 @@ public class MessageServiceImpl implements MessageService {
           NotificationCreateEvent.builder()
               .title("Bạn có tin nhắn mới")
               .content("%s: %s".formatted(userInfo.getFullName(), message.getTextContent()))
-              .type(NotificationType.SYSTEM)
+              .type(NotificationType.MESSAGE)
               .targetUrl("/conversations/" + conversation.getId())
               .userId(messageDto.getRecipientId())
               .build());
@@ -136,6 +139,7 @@ public class MessageServiceImpl implements MessageService {
 
     // Update conversation's last message
     conversation.setLastMessage(savedMessage);
+    conversation.setLastMessageAt(Instant.now());
     conversationRepository.save(conversation);
 
     MessageDto result = MessageMapper.INSTANCE.toDto(savedMessage);

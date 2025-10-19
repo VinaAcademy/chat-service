@@ -20,6 +20,7 @@ import vn.vinaacademy.chat.mapper.ConversationMapper;
 import vn.vinaacademy.chat.repository.ConversationMemberRepository;
 import vn.vinaacademy.chat.repository.ConversationRepository;
 import vn.vinaacademy.chat.repository.MessageRepository;
+import vn.vinaacademy.chat.repository.projection.ConversationUnreadDto;
 import vn.vinaacademy.chat.service.ConversationService;
 import vn.vinaacademy.common.exception.BadRequestException;
 import vn.vinaacademy.security.authentication.SecurityContextHolder;
@@ -89,10 +90,12 @@ public class ConversationServiceImpl implements ConversationService {
       throw BadRequestException.message("Failed to fetch user details");
     }
 
-    // Convert to DTOs
-    return conversations.stream()
-        .map(conv -> ConversationMapper.INSTANCE.toDto(conv, usersResponse.getUsersList()))
-        .toList();
+    // Fetch unread counts for conversations
+    List<ConversationUnreadDto> unreadDtos =
+        conversationRepository.findUnreadCountPerConversation(currentUserId);
+
+    return ConversationMapper.INSTANCE.toDtoList(
+        conversations, unreadDtos, usersResponse.getUsersList());
   }
 
   @Override

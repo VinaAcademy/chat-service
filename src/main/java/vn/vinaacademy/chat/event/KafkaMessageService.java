@@ -1,5 +1,8 @@
 package vn.vinaacademy.chat.event;
 
+import static vn.vinaacademy.chat.constants.WebsocketConstants.GROUP_MESSAGE_WEBSOCKET_TOPIC;
+import static vn.vinaacademy.chat.constants.WebsocketConstants.PRIVATE_MESSAGE_QUEUE;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -57,7 +60,7 @@ public class KafkaMessageService {
 
       MessageDto payload = record.value();
 
-      messagingTemplate.convertAndSendToUser(record.key(), "/queue/pm", payload);
+      messagingTemplate.convertAndSendToUser(record.key(), PRIVATE_MESSAGE_QUEUE, payload);
       log.info("Forwarded private message to WebSocket topic");
     } catch (Exception e) {
       log.error("Failed to handle private message from Kafka", e);
@@ -80,7 +83,7 @@ public class KafkaMessageService {
       MessageDto payload = record.value();
 
       // Broadcast to topic (all subscribers to the conversation will receive)
-      messagingTemplate.convertAndSend("/topic/group/" + record.key(), payload);
+      messagingTemplate.convertAndSend(GROUP_MESSAGE_WEBSOCKET_TOPIC + "/" + record.key(), payload);
       log.info("Forwarded group message to WebSocket topic");
     } catch (Exception e) {
       log.error("Failed to handle group message from Kafka", e);

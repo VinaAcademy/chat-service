@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import vn.vinaacademy.chat.dto.MessageDto;
 import vn.vinaacademy.chat.service.MessageService;
+import vn.vinaacademy.common.response.ApiResponse;
 import vn.vinaacademy.security.annotation.PreAuthorize;
 
 @Slf4j
@@ -19,19 +20,20 @@ public class MessageController {
 
   @GetMapping("/recipient/{recipientId}")
   @PreAuthorize("isAuthenticated()")
-  public List<MessageDto> getMessageByRecipientId(
+  public ApiResponse<List<MessageDto>> getMessageByRecipientId(
       @PathVariable("recipientId") UUID recipientId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size) {
-    return messageService.getMessagesByRecipientId(recipientId, page, size);
+    return ApiResponse.success(messageService.getMessagesByRecipientId(recipientId, page, size));
   }
 
   @GetMapping("/conversation/{conversationId}")
   @PreAuthorize("isAuthenticated()")
-  public List<MessageDto> getMessagesByConversationId(
+  public ApiResponse<List<MessageDto>> getMessagesByConversationId(
       @PathVariable("conversationId") UUID conversationId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size) {
-    return messageService.getMessagesByConversationId(conversationId, page, size);
+    return ApiResponse.success(
+        messageService.getMessagesByConversationId(conversationId, page, size));
   }
 }

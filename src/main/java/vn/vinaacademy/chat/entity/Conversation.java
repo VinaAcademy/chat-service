@@ -69,4 +69,7 @@ public class Conversation {
       this.lastMessageAt = null;
     }
   }
+
+  @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY)
+  private List<Message> messages;
 }

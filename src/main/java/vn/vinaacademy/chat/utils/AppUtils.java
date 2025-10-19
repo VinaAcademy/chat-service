@@ -3,7 +3,7 @@ package vn.vinaacademy.chat.utils;
 import java.security.Principal;
 import java.util.UUID;
 import lombok.experimental.UtilityClass;
-import vn.vinaacademy.security.exception.AccessDeniedException;
+import org.springframework.messaging.MessagingException;
 
 @UtilityClass
 public class AppUtils {
@@ -12,7 +12,7 @@ public class AppUtils {
     try {
       senderId = UUID.fromString(principal.getName());
     } catch (IllegalArgumentException e) {
-      throw new AccessDeniedException("Invalid user ID format in WebSocket message");
+      throw new MessagingException("AUTH_ERROR: Invalid user ID format in WebSocket message");
     }
     return senderId;
   }

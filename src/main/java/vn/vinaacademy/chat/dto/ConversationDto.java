@@ -16,7 +16,6 @@ import vn.vinaacademy.chat.entity.enums.ConversationType;
 @AllArgsConstructor
 public class ConversationDto {
   private String id;
-  private String name;
   private String avatarUrl;
   private String createdAt;
   private String updatedAt;
@@ -25,4 +24,6 @@ public class ConversationDto {
   private MessageDto lastMessage;
   private Instant lastMessageAt;
   private List<MemberDto> members;
+  private boolean isRead;
+  private Integer unreadCount;
 }

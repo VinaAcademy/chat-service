@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -55,15 +56,15 @@ public class AuthChannelInterceptor implements ChannelInterceptor {
                 parsedRoles);
           } else {
             log.warn("Invalid JWT token in STOMP CONNECT frame");
-            throw new IllegalArgumentException("Invalid authentication token");
+            throw new MessagingException("AUTH_ERROR: Invalid authentication token");
           }
         } catch (Exception e) {
           log.error("Error validating JWT token in STOMP CONNECT", e);
-          throw new IllegalArgumentException("Authentication failed: " + e.getMessage());
+          throw new MessagingException("AUTH_ERROR: " + e.getMessage());
         }
       } else {
         log.warn("No authentication token found in STOMP CONNECT frame");
-        throw new IllegalArgumentException("Missing authentication token");
+        throw new MessagingException("AUTH_ERROR: Missing authentication token");
       }
     }
 

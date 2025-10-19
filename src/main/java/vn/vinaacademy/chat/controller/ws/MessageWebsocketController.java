@@ -6,13 +6,13 @@ import java.security.Principal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import vn.vinaacademy.chat.dto.request.GroupMessage;
 import vn.vinaacademy.chat.dto.request.PrivateMessage;
 import vn.vinaacademy.chat.service.MessageService;
-import vn.vinaacademy.security.exception.AccessDeniedException;
 
 @Slf4j
 @Controller
@@ -23,7 +23,7 @@ public class MessageWebsocketController {
   @MessageMapping("/pm")
   public void handlePrivateMessage(PrivateMessage msg, Principal principal) {
     if (principal == null || principal.getName() == null) {
-      throw new AccessDeniedException("Unauthenticated WebSocket message");
+      throw new MessagingException("AUTH_ERROR: Unauthenticated WebSocket message");
     }
     UUID senderId = getSenderId(principal);
     log.info("Received private message from user: {} to user: {}", senderId, msg.getRecipientId());
@@ -33,7 +33,7 @@ public class MessageWebsocketController {
   @MessageMapping("/group")
   public void handleGroupMessage(@Payload GroupMessage msg, Principal principal) {
     if (principal == null || principal.getName() == null) {
-      throw new AccessDeniedException("Unauthenticated WebSocket message");
+      throw new MessagingException("AUTH_ERROR: Unauthenticated WebSocket message");
     }
     UUID senderId = getSenderId(principal);
     log.info(
