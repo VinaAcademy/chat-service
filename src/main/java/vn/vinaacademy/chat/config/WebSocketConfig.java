@@ -1,63 +1,63 @@
 package vn.vinaacademy.chat.config;
 
-import static vn.vinaacademy.chat.interceptor.JwtHandshakeInterceptor.WS_AUTH_ATTR;
-
-import java.security.Principal;
-import java.util.Map;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
-import vn.vinaacademy.chat.interceptor.JwtHandshakeInterceptor;
+import vn.vinaacademy.chat.interceptor.AuthChannelInterceptor;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSocketMessageBroker
+@Order(Ordered.HIGHEST_PRECEDENCE + 99)
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-  private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
+  private final AuthChannelInterceptor authChannelInterceptor;
 
-  @Value("${app.ws.allowed-origins:http://localhost:*}")
+  @Value("${app.ws.allowed-origins:*}")
   private String[] allowedOrigins;
+
+  @Value("${app.ws.heartbeat-interval-ms:60000}")
+  private long heartbeatIntervalMs;
 
   @Override
   public void configureMessageBroker(MessageBrokerRegistry registry) {
     registry.setApplicationDestinationPrefixes("/app");
     // Enable simple broker for local WebSocket communication
     // Kafka handles the message distribution between service instances
-    registry.enableSimpleBroker("/topic", "/queue");
+    registry
+        .enableSimpleBroker("/topic", "/queue")
+        .setHeartbeatValue(new long[] {heartbeatIntervalMs, heartbeatIntervalMs})
+        .setTaskScheduler(heartBeatScheduler());
     registry.setUserDestinationPrefix("/user");
   }
 
   @Override
   public void registerStompEndpoints(StompEndpointRegistry registry) {
-    registry
-        .addEndpoint("/ws")
-        .addInterceptors(jwtHandshakeInterceptor)
-        .setHandshakeHandler(jwtPrincipalHandshakeHandler())
-        .setAllowedOriginPatterns(allowedOrigins)
-        .withSockJS();
+    registry.addEndpoint("/ws/chat").setAllowedOriginPatterns(allowedOrigins).withSockJS();
+  }
+
+  @Override
+  public void configureClientInboundChannel(ChannelRegistration registration) {
+    // Add interceptor to authenticate user from STOMP CONNECT frame
+    registration.interceptors(authChannelInterceptor);
   }
 
   @Bean
-  DefaultHandshakeHandler jwtPrincipalHandshakeHandler() {
-    return new DefaultHandshakeHandler() {
-      @Override
-      protected Principal determineUser(
-          @NonNull ServerHttpRequest req,
-          @NonNull WebSocketHandler wsHandler,
-          @NonNull Map<String, Object> attrs) {
-        return (Principal) attrs.get(WS_AUTH_ATTR);
-      }
-    };
+  public ThreadPoolTaskScheduler heartBeatScheduler() {
+    ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+    scheduler.setPoolSize(1);
+    scheduler.setThreadNamePrefix("ws-heartbeat-");
+    scheduler.initialize();
+    return scheduler;
   }
 }

@@ -1,19 +1,21 @@
 package vn.vinaacademy.chat.repository;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import vn.vinaacademy.chat.entity.Conversation;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import vn.vinaacademy.chat.entity.Message;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-  List<Message> findTop50ByConversationAndCreatedAtLessThanOrderByCreatedAtDescIdDesc(
-      Conversation conversation, Instant before);
+  Page<Message> findByConversationIdOrderByCreatedAtDesc(UUID conversationId, Pageable pageable);
 
-  List<Message> findTop50ByConversationAndSeqLessThanOrderBySeqDesc(
-      Conversation conversation, Long seqCursor);
-
-  List<Message> findTop1ByConversationOrderByCreatedAtDescIdDesc(Conversation conversation);
+  @Query(
+      "SELECT m FROM Message m WHERE m.conversation.id = :conversationId "
+          + "ORDER BY m.createdAt DESC, m.id DESC")
+  List<Message> findLastMessageByConversationId(
+      @Param("conversationId") UUID conversationId, Pageable pageable);
 }

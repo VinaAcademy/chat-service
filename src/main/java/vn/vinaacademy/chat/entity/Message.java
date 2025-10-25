@@ -73,5 +73,6 @@ public class Message {
       if (fileId == null || fileName == null || fileName.isBlank())
         throw new IllegalArgumentException(type + " message must have file meta");
     }
+    createdAt = createdAt == null ? Instant.now() : createdAt;
   }
 }
