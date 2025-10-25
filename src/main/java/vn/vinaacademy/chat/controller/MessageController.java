@@ -1,9 +1,9 @@
 package vn.vinaacademy.chat.controller;
 
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import vn.vinaacademy.chat.dto.MessageDto;
 import vn.vinaacademy.chat.service.MessageService;
@@ -20,7 +20,7 @@ public class MessageController {
 
   @GetMapping("/recipient/{recipientId}")
   @PreAuthorize("isAuthenticated()")
-  public ApiResponse<List<MessageDto>> getMessageByRecipientId(
+  public ApiResponse<Page<MessageDto>> getMessageByRecipientId(
       @PathVariable("recipientId") UUID recipientId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size) {
@@ -29,7 +29,7 @@ public class MessageController {
 
   @GetMapping("/conversation/{conversationId}")
   @PreAuthorize("isAuthenticated()")
-  public ApiResponse<List<MessageDto>> getMessagesByConversationId(
+  public ApiResponse<Page<MessageDto>> getMessagesByConversationId(
       @PathVariable("conversationId") UUID conversationId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "50") int size) {

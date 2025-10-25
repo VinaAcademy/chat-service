@@ -4,11 +4,11 @@ import com.vinaacademy.grpc.GetUserByIdResponse;
 import com.vinaacademy.grpc.UserInfo;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.MessagingException;
 import org.springframework.security.access.AccessDeniedException;
@@ -43,19 +43,19 @@ public class MessageServiceImpl implements MessageService {
   private final UserGrpcClient userGrpcClient;
 
   @Override
-  public List<MessageDto> getMessagesByRecipientId(UUID recipientId, int page, int size) {
+  public Page<MessageDto> getMessagesByRecipientId(UUID recipientId, int page, int size) {
     UserContext userContext = SecurityContextHolder.getContext();
     UUID currentUserId = UUID.fromString(userContext.getUserId());
     Conversation conversation =
         conversationDomainService.getOrCreateDirectConversation(currentUserId, recipientId);
     Pageable pageable = Pageable.ofSize(size).withPage(page);
-    List<Message> messages =
+    Page<Message> messages =
         messageRepository.findByConversationIdOrderByCreatedAtDesc(conversation.getId(), pageable);
-    return MessageMapper.INSTANCE.toDtoList(messages);
+    return MessageMapper.INSTANCE.toDtoPage(messages);
   }
 
   @Override
-  public List<MessageDto> getMessagesByConversationId(UUID conversationId, int page, int size) {
+  public Page<MessageDto> getMessagesByConversationId(UUID conversationId, int page, int size) {
     UserContext userContext = SecurityContextHolder.getContext();
     UUID currentUserId = UUID.fromString(userContext.getUserId());
 
@@ -73,9 +73,9 @@ public class MessageServiceImpl implements MessageService {
     }
 
     Pageable pageable = Pageable.ofSize(size).withPage(page);
-    List<Message> messages =
+    Page<Message> messages =
         messageRepository.findByConversationIdOrderByCreatedAtDesc(conversationId, pageable);
-    return MessageMapper.INSTANCE.toDtoList(messages);
+    return MessageMapper.INSTANCE.toDtoPage(messages);
   }
 
   @Override

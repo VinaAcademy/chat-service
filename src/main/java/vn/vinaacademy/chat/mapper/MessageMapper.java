@@ -1,9 +1,9 @@
 package vn.vinaacademy.chat.mapper;
 
-import java.util.List;
 import java.util.UUID;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
+import org.springframework.data.domain.Page;
 import vn.vinaacademy.chat.dto.MessageDto;
 import vn.vinaacademy.chat.dto.request.GroupMessage;
 import vn.vinaacademy.chat.dto.request.PrivateMessage;
@@ -25,8 +25,6 @@ public interface MessageMapper {
   @Mapping(source = "createdAt", target = "createdAt", dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'")
   @Mapping(source = "deletedAt", target = "deletedAt", dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'")
   MessageDto toDto(Message message);
-
-  List<MessageDto> toDtoList(List<Message> messages);
 
   // ===== Mapping from DTO (PrivateMessage) to Entity =====
   @Named("fromPrivateMessage")
@@ -56,5 +54,9 @@ public interface MessageMapper {
         .fileName(messageDto.getFileName())
         .fileSize(messageDto.getFileSize())
         .build();
+  }
+
+  default Page<MessageDto> toDtoPage(Page<Message> messages) {
+    return messages.map(this::toDto);
   }
 }
