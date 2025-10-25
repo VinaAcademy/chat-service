@@ -1,6 +1,6 @@
 package vn.vinaacademy.chat.controller.ws;
 
-import static vn.vinaacademy.chat.utils.AppUtils.getSenderId;
+import static vn.vinaacademy.chat.utils.AppUtils.getUserIdByPrincipal;
 
 import java.security.Principal;
 import java.util.UUID;
@@ -25,7 +25,7 @@ public class MessageWebsocketController {
     if (principal == null || principal.getName() == null) {
       throw new MessagingException("AUTH_ERROR: Unauthenticated WebSocket message");
     }
-    UUID senderId = getSenderId(principal);
+    UUID senderId = getUserIdByPrincipal(principal);
     log.info("Received private message from user: {} to user: {}", senderId, msg.getRecipientId());
     messageService.sendPrivateMessage(msg, senderId);
   }
@@ -35,7 +35,7 @@ public class MessageWebsocketController {
     if (principal == null || principal.getName() == null) {
       throw new MessagingException("AUTH_ERROR: Unauthenticated WebSocket message");
     }
-    UUID senderId = getSenderId(principal);
+    UUID senderId = getUserIdByPrincipal(principal);
     log.info(
         "Received group message from user: {} to conversation: {}",
         senderId,
