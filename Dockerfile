@@ -11,7 +11,7 @@ COPY ./src ./src
 RUN mvn clean package -DskipTests
 
 # Run stage
-FROM openjdk:17-jdk-alpine
+FROM eclipse-temurin:17-jdk-alpine
 
 LABEL maintainer="VinaAcademy"
 LABEL description="Chat Service for microservices architecture"
