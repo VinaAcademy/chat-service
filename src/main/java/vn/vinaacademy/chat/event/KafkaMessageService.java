@@ -1,4 +1,7 @@
-package vn.vinaacademy.chat.service;
+package vn.vinaacademy.chat.event;
+
+import static vn.vinaacademy.chat.constants.WebsocketConstants.GROUP_MESSAGE_WEBSOCKET_TOPIC;
+import static vn.vinaacademy.chat.constants.WebsocketConstants.PRIVATE_MESSAGE_QUEUE;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -7,21 +10,21 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import vn.vinaacademy.chat.dto.OutboundMessage;
+import vn.vinaacademy.chat.dto.MessageDto;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class KafkaMessageService {
 
-  private final KafkaTemplate<String, Object> kafkaTemplate;
+  private final KafkaTemplate<String, MessageDto> kafkaTemplate;
   private final SimpMessagingTemplate messagingTemplate;
 
   private static final String PRIVATE_MESSAGE_TOPIC = "private-messages";
   private static final String GROUP_MESSAGE_TOPIC = "group-messages";
 
   /** Send private message to Kafka topic */
-  public void sendPrivateMessage(String userId, OutboundMessage message) {
+  public void sendPrivateMessage(String userId, MessageDto message) {
     kafkaTemplate
         .send(PRIVATE_MESSAGE_TOPIC, userId, message)
         .whenComplete(
@@ -40,7 +43,7 @@ public class KafkaMessageService {
   }
 
   /** Send group message to Kafka topic */
-  public void sendGroupMessage(String groupId, Object message) {
+  public void sendGroupMessage(String groupId, MessageDto message) {
     try {
       kafkaTemplate.send(GROUP_MESSAGE_TOPIC, groupId, message);
       log.info("Sent group message to Kafka topic: {} for group: {}", GROUP_MESSAGE_TOPIC, groupId);
@@ -51,13 +54,13 @@ public class KafkaMessageService {
 
   /** Listen for private messages from Kafka and forward to WebSocket */
   @KafkaListener(topics = PRIVATE_MESSAGE_TOPIC)
-  public void handlePrivateMessage(ConsumerRecord<String, OutboundMessage> record) {
+  public void handlePrivateMessage(ConsumerRecord<String, MessageDto> record) {
     try {
       log.info("Received private message from Kafka: {}", record);
 
-      OutboundMessage payload = record.value();
+      MessageDto payload = record.value();
 
-      messagingTemplate.convertAndSendToUser(record.key(), "/queue/pm", payload);
+      messagingTemplate.convertAndSendToUser(record.key(), PRIVATE_MESSAGE_QUEUE, payload);
       log.info("Forwarded private message to WebSocket topic");
     } catch (Exception e) {
       log.error("Failed to handle private message from Kafka", e);
@@ -65,17 +68,25 @@ public class KafkaMessageService {
   }
 
   /** Listen for group messages from Kafka and forward to WebSocket */
-  //  @KafkaListener(topics = GROUP_MESSAGE_TOPIC, groupId = "#{@kafkaConfig.groupId}")
-  //  public void handleGroupMessage(Object message) {
-  //    try {
-  //      log.info("Received group message from Kafka: {}", message);
-  //
-  //      // Broadcast to topic (all subscribers will receive)
-  //      messagingTemplate.convertAndSend("/topic/group", message);
-  //
-  //      log.info("Broadcasted group message to /topic/group");
-  //    } catch (Exception e) {
-  //      log.error("Failed to handle group message from Kafka", e);
-  //    }
-  //  }
+  @KafkaListener(topics = GROUP_MESSAGE_TOPIC)
+  public void handleGroupMessage(ConsumerRecord<String, MessageDto> record) {
+    try {
+      log.info("Received group message from Kafka: {}", record);
+
+      log.debug(
+          "Received group message from Kafka: topic={}, partition={}, offset={}, key={}",
+          record.topic(),
+          record.partition(),
+          record.offset(),
+          record.key());
+
+      MessageDto payload = record.value();
+
+      // Broadcast to topic (all subscribers to the conversation will receive)
+      messagingTemplate.convertAndSend(GROUP_MESSAGE_WEBSOCKET_TOPIC + "/" + record.key(), payload);
+      log.info("Forwarded group message to WebSocket topic");
+    } catch (Exception e) {
+      log.error("Failed to handle group message from Kafka", e);
+    }
+  }
 }

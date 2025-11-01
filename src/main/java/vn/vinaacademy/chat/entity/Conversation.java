@@ -2,9 +2,12 @@ package vn.vinaacademy.chat.entity;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.UuidGenerator;
 import vn.vinaacademy.chat.entity.enums.ConversationType;
 
@@ -27,6 +30,14 @@ public class Conversation {
 
   @Column(columnDefinition = "text")
   private String title; // null với DIRECT
+
+  @OneToMany(
+      mappedBy = "conversation",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.LAZY)
+  @Fetch(FetchMode.SUBSELECT)
+  private List<ConversationMember> members;
 
   @Column(name = "avatar_file_id")
   private UUID avatarFileId;
@@ -58,4 +69,7 @@ public class Conversation {
       this.lastMessageAt = null;
     }
   }
+
+  @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY)
+  private List<Message> messages;
 }
