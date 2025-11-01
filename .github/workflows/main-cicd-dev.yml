@@ -117,14 +117,14 @@ jobs:
             git pull origin develop
             
             # Pull latest Docker images
-            docker-compose pull chat-service
+            docker-compose -f docker-compose.dev.yml pull chat-service
             
             # Restart chat-service with new image
-            docker-compose up -d chat-service
+            docker-compose  -f docker-compose.dev.yml up -d chat-service
             
             # Clean up old images
             docker image prune -f
             
             # Check if service is running
             sleep 10
-            docker-compose ps chat-service
+            docker-compose  -f docker-compose.dev.yml ps chat-service
